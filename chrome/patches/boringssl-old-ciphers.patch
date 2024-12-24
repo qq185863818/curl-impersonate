@@ -239,4 +239,37 @@ diff -u1 -Nar --exclude build --exclude tags boringssl-d24a38200fef19150eef00cad
 +  // if (!sigalgs_unique(prefs)) {
 +  //   return false;
 +  // }
+
+
+diff -u1 -Nar --exclude build --exclude tags boringssl-d24a38200fef19150eef00cad35b138936c08767/ssl/ssl_key_share.cc boringssl/ssl/ssl_key_share.cc
+--- boringssl-d24a38200fef19150eef00cad35b138936c08767/ssl/ssl_key_share.cc	2023-09-27 05:13:00.000000000 +0300
++++ boringssl/ssl/ssl_key_share.cc	2024-02-29 21:26:15.518023534 +0200
+@@ -312,6 +312,8 @@
+       return MakeUnique<X25519KeyShare>();
+     case SSL_GROUP_X25519_KYBER768_DRAFT00:
+       return MakeUnique<X25519Kyber768KeyShare>();
++    case 0x11ec:
++      return MakeUnique<X25519Kyber768KeyShare>();  
+     default:
+       return nullptr;
+   }
+@@ -340,7 +342,18 @@
+       return true;
+     }
+   }
+-  return false;
++  uint16_t result = 0;
++for (size_t i = 0; i<len; ++i) {
++   // 检查是否是数字字符
++   if (name[i] < '0' || name[i] > '9') {
++       *out_group_id = 0x11ec;// 默认值
++       return true;
++   }
++   // 将字符转换为数字并累加到结果
++   result = result * 10 + (name[i] - '0');
++}
++  *out_group_id = result;// 自定义扩展 P-251:666:999
++  return true;
+ }
  
+ int ssl_group_id_to_nid(uint16_t group_id) {
